@@ -47,7 +47,7 @@ fn replace_word_numbers(input: &str) -> i32 {
     let mut found_word = "";
     let mut number = 0;
     let mut counter = 0;
-    for word in numberwords {
+    for word in &numberwords {
         counter += 1;
         match line.find(word) {
             Some(x) => {
@@ -64,9 +64,6 @@ fn replace_word_numbers(input: &str) -> i32 {
         line = line.replace(found_word, number.to_string().as_str());
     }
 
-    let numberwords = vec![
-        "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-    ];
     let mut largest_index = 0;
     let mut count = 0;
     for c in line.chars() {
@@ -78,7 +75,7 @@ fn replace_word_numbers(input: &str) -> i32 {
     found_word = "";
     number = 0;
     counter = 0;
-    for word in numberwords {
+    for word in &numberwords {
         counter += 1;
         match line.rfind(word) {
             Some(x) => {
