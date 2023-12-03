@@ -212,9 +212,163 @@ fn day2() {
     println!("{}", day2_2(&data));
 }
 
+#[test]
+fn day3tests() {
+    let data = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day3test.txt",
+    )
+    .expect("Data for day1-Test not found");
+
+    assert_eq!(day3_1(&data), 4361);
+    assert_eq!(day3_2(&data), 467835);
+}
+
+#[derive(Debug)]
+struct Day3Numbers {
+    lineid: i32,
+    positions: Vec<(i32, i32, i32)>,
+}
+
+impl Day3Numbers {
+    fn new(lineid: i32, lines: &Vec<&str>) -> Self {
+        let line = lines[lineid as usize];
+        let mut innumber = false;
+        let mut position = 0;
+        let mut positions: Vec<(i32, i32, i32)> = vec![];
+        let mut start = 0;
+        let mut length = 0;
+        for ch in line.chars() {
+            if ch.is_numeric() {
+                length += 1;
+                if !innumber {
+                    innumber = true;
+                    start = position;
+                }
+            } else {
+                if innumber {
+                    positions.push((start, length, day3_ispart(lines, lineid, (start, length))));
+                }
+                innumber = false;
+                start = 0;
+                length = 0;
+            }
+            position += 1;
+        }
+        if start > 0 {
+            positions.push((start, length, day3_ispart(lines, lineid, (start, length))));
+        }
+        Self { lineid, positions }
+    }
+
+    fn getsum(&self) -> i32 {
+        self.positions
+            .iter()
+            .map(|x| {
+                let (_, _, val) = x;
+                val
+            })
+            .sum()
+    }
+}
+
+fn day3_ispart(lines: &Vec<&str>, line: i32, position: (i32, i32)) -> i32 {
+    let maxline = lines.len() as i32 - 1;
+    let mut minl = if line == 0 { 0 } else { line - 1 };
+    let maxl = if line == maxline { line } else { line + 1 };
+    let (start, length) = position;
+    let maxchar = lines.first().unwrap().len() as i32;
+    let minc = if start == 0 { 0 } else { start - 1 };
+    let maxc = if start + length == maxchar {
+        start + length
+    } else {
+        start + length + 1
+    };
+    let number: i32 = lines[line as usize]
+        .get(start as usize..(start + length) as usize)
+        .unwrap()
+        .parse()
+        .unwrap();
+    while minl <= maxl {
+        let l = lines[minl as usize]
+            .get(minc as usize..maxc as usize)
+            .unwrap();
+        for c in l.chars() {
+            if !c.is_numeric() && c != '.' {
+                return number;
+            }
+        }
+        minl += 1;
+    }
+    0
+}
+
+fn day3_1(input: &str) -> i32 {
+    let lines: Vec<&str> = input.lines().collect();
+    let mut lineid = 0;
+    let mut day3numbers: Vec<Day3Numbers> = vec![];
+    for _line in &lines {
+        day3numbers.push(Day3Numbers::new(lineid, &lines));
+        lineid += 1;
+    }
+    day3numbers.iter().map(Day3Numbers::getsum).sum()
+}
+
+fn get_ratio(numbers: &Vec<Day3Numbers>, line: i32, column: i32) -> i32 {
+    let mut possible_numbers: Vec<i32> = vec![];
+    for numberline in numbers {
+        if numberline.lineid < line - 1 || numberline.lineid > line + 1 {
+            continue;
+        }
+        for pos in &numberline.positions {
+            if pos.0 <= column + 1 && column - 1 < pos.0 + pos.1 {
+                possible_numbers.push(pos.2);
+            }
+        }
+    }
+    if possible_numbers.len() == 2 {
+        return possible_numbers.first().unwrap() * possible_numbers.last().unwrap();
+    }
+    0
+}
+
+fn day3_2(input: &str) -> i32 {
+    let lines: Vec<&str> = input.lines().collect();
+    let mut lineid = 0;
+    let mut day3numbers: Vec<Day3Numbers> = vec![];
+    for _line in &lines {
+        day3numbers.push(Day3Numbers::new(lineid, &lines));
+        lineid += 1;
+    }
+    lineid = 0;
+    let mut charid = 0;
+    let mut sum = 0;
+    for line in &lines {
+        for ch in line.chars() {
+            if ch == '*' {
+                sum += get_ratio(&day3numbers, lineid, charid);
+            }
+            charid += 1;
+        }
+        charid = 0;
+        lineid += 1;
+    }
+    sum
+}
+
+fn day3() {
+    let data =
+        std::fs::read_to_string("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day3.txt")
+            .expect("Data for day3-Problem not found");
+
+    println!("{}", day3_1(&data));
+    println!("{}", day3_2(&data));
+}
+
 fn main() {
     println!("Day1 results:");
     day1();
     println!("Day2 results:");
     day2();
+    println!("Day3 results:");
+    day3();
 }
