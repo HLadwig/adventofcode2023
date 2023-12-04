@@ -364,6 +364,115 @@ fn day3() {
     println!("{}", day3_2(&data));
 }
 
+#[test]
+fn day4tests() {
+    let data = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day4test.txt",
+    )
+    .expect("Data for day1-Test not found");
+
+    assert_eq!(day4_1(&data), 13);
+    //assert_eq!(day4_2(&data), 30);
+}
+
+#[derive(Debug)]
+struct Day4Card {
+    card: i32,
+    count: i32,
+    winning_numbers: Vec<i32>,
+    actual_numbers: Vec<i32>,
+    winners: i32,
+}
+
+impl Day4Card {
+    fn new(line: &str) -> Self {
+        let card = line.split(':').next().unwrap().replace("Card ", "");
+        let mut content = line.split(": ").last().unwrap().split(" | ");
+        let wn = content.next().unwrap().trim().replace("  ", " ");
+        let an = content.next().unwrap().trim().replace("  ", " ");
+        let winning_numbers: Vec<i32> = wn.split(' ').map(|x| x.parse().unwrap()).collect();
+        let actual_numbers = an.split(' ').map(|x| x.parse().unwrap()).collect();
+        let mut count = 0;
+        for num in &actual_numbers {
+            count += if winning_numbers.contains(num) { 1 } else { 0 };
+        }
+        Self {
+            card: card.trim().parse().unwrap(),
+            count: 1,
+            winning_numbers,
+            actual_numbers,
+            winners: count,
+        }
+    }
+
+    fn get_winner_count(&self) -> i32 {
+        let mut count = 0;
+        for num in &self.actual_numbers {
+            count += if self.winning_numbers.contains(num) {
+                1
+            } else {
+                0
+            };
+        }
+        count
+    }
+}
+
+fn day4_1(input: &str) -> i32 {
+    let cards: Vec<Day4Card> = input.lines().map(Day4Card::new).collect();
+    let base: i32 = 2;
+    cards
+        .iter()
+        .map(|x| {
+            let wc = x.winners;
+            if wc > 0 {
+                base.pow((wc - 1) as u32)
+            } else {
+                0
+            }
+        })
+        .sum::<i32>()
+}
+
+/*
+fn day4rec(mut cards: Vec<Day4Card>, sum: i32) -> i32 {
+    cards.reverse();
+    let act_card = cards.pop().unwrap();
+    let mut treffer = act_card.get_winner_count();
+    let anzahl = act_card.count;
+    if cards.len() == 0 {
+        return anzahl;
+    } else {
+        for card in cards {
+            if card.card > act_card.card && card.card <= act_card.card + treffer {
+                card.count += anzahl;
+            }
+        }
+        5
+    }
+}
+*/
+
+/*
+fn day4_2(input: &str) -> i32 {
+    let cards: Vec<Day4Card> = input.lines().map(Day4Card::new).collect();
+    let mut counts: Vec<i32> = cards.iter().map(|x| x.count).collect();
+    for card in cards {
+        let winners = card.get_winner_count();
+        let act_card = card.card;
+    }
+    0
+}*/
+
+fn day4() {
+    let data =
+        std::fs::read_to_string("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day4.txt")
+            .expect("Data for day4-Problem not found");
+
+    println!("{}", day4_1(&data));
+    //println!("{}", day4_2(&data));
+}
+
 fn main() {
     println!("Day1 results:");
     day1();
@@ -371,4 +480,6 @@ fn main() {
     day2();
     println!("Day3 results:");
     day3();
+    println!("Day4 results:");
+    day4();
 }
