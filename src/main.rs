@@ -458,7 +458,7 @@ fn day5tests() {
     .expect("Data for day5-Test not found");
 
     assert_eq!(day5_1(&data), 35);
-    //assert_eq!(day5_2(&data), 30);
+    assert_eq!(day5_2(&data), 46);
 }
 
 fn day5_1(input: &str) -> i64 {
@@ -502,7 +502,146 @@ fn day5transform(seed: &i64, transformations: &str) -> i64 {
     *seed
 }
 
-//fn day5_2(input: &str) -> i64 {}
+#[derive(Debug)]
+struct Day5tf {
+    destination: i64,
+    source: i64,
+    range: i64,
+}
+
+impl Day5tf {
+    fn new(destination: i64, source: i64, range: i64) -> Self {
+        Self {
+            destination,
+            source,
+            range,
+        }
+    }
+}
+
+fn day5_2(input: &str) -> i64 {
+    let mut source: Vec<i64> = input
+        .lines()
+        .next()
+        .unwrap()
+        .split(": ")
+        .last()
+        .unwrap()
+        .split_ascii_whitespace()
+        .map(|x| x.parse().unwrap())
+        .collect();
+    let mut ranges: Vec<(i64, i64)> = vec![];
+    while !source.is_empty() {
+        let length = source.pop().unwrap();
+        let start = source.pop().unwrap();
+        ranges.push((start, length));
+    }
+    println!("{:?}", ranges);
+    let transformation_blocks = input.split("map:");
+    let mut mappings: Vec<Vec<Day5tf>> = vec![];
+    for tf in transformation_blocks {
+        if tf.starts_with("seeds:") || tf.is_empty() {
+            continue;
+        }
+        let mut transformations: Vec<Day5tf> = vec![];
+        for line in tf.lines() {
+            if line.contains("-to-") || line.is_empty() {
+                continue;
+            }
+            let values: Vec<i64> = line
+                .split_ascii_whitespace()
+                .map(|x| x.parse().unwrap())
+                .collect();
+            transformations.push(Day5tf::new(values[0], values[1], values[2]));
+        }
+        mappings.push(transformations);
+    }
+    mappings.reverse();
+    //day5transform_ranges_rec(ranges.pop().unwrap(), ranges, &mut mappings);
+    0
+}
+
+fn day5apply_mapping(seeds: &(i64, i64), mapping: &Vec<Day5tf>) -> Vec<(i64, i64)> {
+    let mut result: Vec<(i64, i64)> = vec![];
+    let mut originalrest = seeds;
+    for tf in mapping {
+        if tf.source + tf.range < originalrest.0 || tf.source > originalrest.0 + originalrest.1 {
+            continue;
+        }
+        let diff = tf.destination - tf.source;
+        if tf.source <= originalrest.0 {
+            if tf.source + tf.range >= originalrest.0 + originalrest.1 {
+                result.push((originalrest.0 + diff, originalrest.1));
+                return result;
+            } else {
+                let splitposition = tf.source + tf.range - originalrest.0;
+                result.push((originalrest.0 + diff, splitposition));
+                //originalrest.0+=splitposition+1;
+                //originalrest.1-=splitposition;
+                result.append(&mut day5apply_mapping(
+                    &(
+                        originalrest.0 + splitposition + 1,
+                        originalrest.1 - splitposition,
+                    ),
+                    mapping,
+                ));
+            }
+        } else {
+            // tf.source > originalrest.0
+            if tf.source + tf.range >= originalrest.0 + originalrest.1 {
+                let splitposition = originalrest.0 + originalrest.1 - tf.source;
+                result.push((tf.source + diff, splitposition));
+                result.append(&mut day5apply_mapping(
+                    &(originalrest.0, originalrest.1 - splitposition),
+                    mapping,
+                ));
+            } else {
+                let splitposition = originalrest.0 + originalrest.1 - tf.source;
+                result.push((tf.source, splitposition));
+                result.append(&mut day5apply_mapping(
+                    &(originalrest.0, originalrest.1 - splitposition),
+                    mapping,
+                ));
+                result.append(&mut day5apply_mapping(
+                    &(
+                        tf.source + splitposition + 1,
+                        originalrest.0 + originalrest.1 - splitposition - tf.source,
+                    ),
+                    mapping,
+                ));
+            }
+        }
+    }
+
+    result.push(*originalrest);
+    result
+}
+
+/*
+fn day5transform_ranges_rec(
+    testseeds: (i64, i64),
+    restseeds: Vec<(i64, i64)>,
+    mut mappings: &mut Vec<Vec<Day5tf>>,
+) -> i64 {
+    println!("Recursion called with parameters:");
+    println!("Active range: {:?}", testseeds);
+    println!("Other ranges: {:?}", restseeds);
+    println!("Mappings: {:?}", mappings);
+    if mappings.is_empty() {
+        let minfromrest = restseeds.iter().map(|x| x.0).min().unwrap();
+        return testseeds.0.min(minfromrest);
+    } else {
+        // apply first mapping then call with new ranges and rest of mappings
+        let act_mapping = mappings.pop().unwrap();
+        println!("Vor apply: {:?}", testseeds);
+        let mut new_ranges = day5apply_mapping(&testseeds, &act_mapping);
+        println!("nach apply: {:?}", new_ranges);
+        return day5transform_ranges_rec(new_ranges.pop().unwrap(), new_ranges, mappings);
+    }
+
+    0
+}
+*/
 
 fn day5() {
     let data =
