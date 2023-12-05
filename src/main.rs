@@ -450,6 +450,69 @@ fn day4() {
     println!("{}", day4_2(&data));
 }
 
+#[test]
+fn day5tests() {
+    let data = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day5test.txt",
+    )
+    .expect("Data for day5-Test not found");
+
+    assert_eq!(day5_1(&data), 35);
+    //assert_eq!(day5_2(&data), 30);
+}
+
+fn day5_1(input: &str) -> i64 {
+    let mut source: Vec<i64> = input
+        .lines()
+        .next()
+        .unwrap()
+        .split(": ")
+        .last()
+        .unwrap()
+        .split_ascii_whitespace()
+        .map(|x| x.parse().unwrap())
+        .collect();
+    let transformation_blocks = input.split("map:");
+    for tf in transformation_blocks {
+        if tf.starts_with("seeds:") || tf.is_empty() {
+            continue;
+        }
+        source = source.iter().map(|x| day5transform(x, tf)).collect();
+    }
+    *source.iter().min().unwrap()
+}
+
+fn day5transform(seed: &i64, transformations: &str) -> i64 {
+    for line in transformations.lines() {
+        if line.contains("-to-") || line.is_empty() {
+            continue;
+        }
+        let values: Vec<i64> = line
+            .split_ascii_whitespace()
+            .map(|x| x.parse().unwrap())
+            .collect();
+        let destination = values[0];
+        let source = values[1];
+        let range = values[2];
+        if *seed >= source && *seed < source + range {
+            let diff = destination - source;
+            return *seed + diff;
+        }
+    }
+    *seed
+}
+
+//fn day5_2(input: &str) -> i64 {}
+
+fn day5() {
+    let data =
+        std::fs::read_to_string("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day5.txt")
+            .expect("Data for day5-Problem not found");
+
+    println!("{}", day5_1(&data));
+    //println!("{}", day5_2(&data));
+}
+
 fn main() {
     println!("Day1 results:");
     day1();
@@ -459,4 +522,34 @@ fn main() {
     day3();
     println!("Day4 results:");
     day4();
+    println!("Day5 results:");
+    day5();
 }
+
+/*
+#[test]
+fn dayxtests() {
+    let data = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\dayxtest.txt",
+    )
+    .expect("Data for dayx-Test not found");
+
+    assert_eq!(dayx_1(&data), 13);
+    //assert_eq!(dayx_2(&data), 30);
+}
+
+fn dayx_1(input: &str) -> i32 {
+    0
+}
+
+//fn dayx_2(input: &str) -> i32 {}
+
+fn dayx() {
+    let data =
+        std::fs::read_to_string("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\dayx.txt")
+            .expect("Data for dayx-Problem not found");
+
+    println!("{}", dayx_1(&data));
+    //println!("{}", dayx_2(&data));
+}
+*/
