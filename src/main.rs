@@ -116,7 +116,7 @@ fn day2tests() {
     let data = std::fs::read_to_string(
         "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day2test.txt",
     )
-    .expect("Data for day1-Test not found");
+    .expect("Data for day2-Test not found");
 
     assert_eq!(day2_1(&data), 8);
     assert_eq!(day2_2(&data), 2286);
@@ -217,7 +217,7 @@ fn day3tests() {
     let data = std::fs::read_to_string(
         "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day3test.txt",
     )
-    .expect("Data for day1-Test not found");
+    .expect("Data for day3-Test not found");
 
     assert_eq!(day3_1(&data), 4361);
     assert_eq!(day3_2(&data), 467835);
@@ -627,88 +627,6 @@ fn day5apply_mapping(seeds: (i64, i64), mapping: &Vec<Day5tf>) -> Vec<(i64, i64)
     result
 }
 
-/*
-fn day5apply_mapping_rec(seeds: (i64, i64), mapping: &Vec<Day5tf>) -> Vec<(i64, i64)> {
-    let mut result: Vec<(i64, i64)> = vec![];
-    let originalrest = seeds;
-    for tf in mapping {
-        if tf.source + tf.range < originalrest.0 || tf.source > originalrest.0 + originalrest.1 {
-            continue;
-        }
-        let diff = tf.destination - tf.source;
-        if tf.source <= originalrest.0 {
-            if tf.source + tf.range >= originalrest.0 + originalrest.1 {
-                result.push((originalrest.0 + diff, originalrest.1));
-                return result;
-            } else {
-                let splitposition = tf.source + tf.range - originalrest.0;
-                result.push((originalrest.0 + diff, splitposition));
-                //originalrest.0+=splitposition+1;
-                //originalrest.1-=splitposition;
-                result.append(&mut day5apply_mapping_rec(
-                    (
-                        originalrest.0 + splitposition + 1,
-                        originalrest.1 - splitposition,
-                    ),
-                    mapping,
-                ));
-            }
-        } else {
-            // tf.source > originalrest.0
-            if tf.source + tf.range >= originalrest.0 + originalrest.1 {
-                let splitposition = originalrest.0 + originalrest.1 - tf.source;
-                result.push((tf.source + diff, splitposition));
-                result.append(&mut day5apply_mapping_rec(
-                    (originalrest.0, originalrest.1 - splitposition),
-                    mapping,
-                ));
-            } else {
-                let splitposition = originalrest.0 + originalrest.1 - tf.source;
-                result.push((tf.source, splitposition));
-                result.append(&mut day5apply_mapping_rec(
-                    (originalrest.0, originalrest.1 - splitposition),
-                    mapping,
-                ));
-                result.append(&mut day5apply_mapping_rec(
-                    (
-                        tf.source + splitposition + 1,
-                        originalrest.0 + originalrest.1 - splitposition - tf.source,
-                    ),
-                    mapping,
-                ));
-            }
-        }
-    }
-
-    result.push(originalrest);
-    result
-}
-
-fn day5transform_ranges_rec(
-    testseeds: (i64, i64),
-    restseeds: Vec<(i64, i64)>,
-    mut mappings: &mut Vec<Vec<Day5tf>>,
-) -> i64 {
-    println!("Recursion called with parameters:");
-    println!("Active range: {:?}", testseeds);
-    println!("Other ranges: {:?}", restseeds);
-    println!("Mappings: {:?}", mappings);
-    if mappings.is_empty() {
-        let minfromrest = restseeds.iter().map(|x| x.0).min().unwrap();
-        return testseeds.0.min(minfromrest);
-    } else {
-        // apply first mapping then call with new ranges and rest of mappings
-        let act_mapping = mappings.pop().unwrap();
-        println!("Vor apply: {:?}", testseeds);
-        let mut new_ranges = day5apply_mapping_rec(&testseeds, &act_mapping);
-        println!("nach apply: {:?}", new_ranges);
-        return day5transform_ranges_rec(new_ranges.pop().unwrap(), new_ranges, mappings);
-    }
-
-    0
-}
-*/
-
 fn day5() {
     let data =
         std::fs::read_to_string("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day5.txt")
@@ -716,6 +634,100 @@ fn day5() {
 
     println!("{}", day5_1(&data));
     println!("{}", day5_2(&data));
+}
+
+#[test]
+fn day6tests() {
+    let data = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day6test.txt",
+    )
+    .expect("Data for day6-Test not found");
+
+    assert_eq!(day6_1(&data), 288);
+    assert_eq!(day6_2(&data), 71503);
+}
+
+fn day6get_racedistances(timedist: (&i32, &i32)) -> i32 {
+    let mut result = 0;
+    let mut i = 1;
+    while i < *timedist.0 {
+        if i * (timedist.0 - i) > *timedist.1 {
+            result += 1;
+        }
+        i += 1;
+    }
+    result
+}
+
+fn day6fast_racedistances(timedist: (&i64, &i64)) -> i64 {
+    let mut result = 0;
+    let mut firstwin = 1;
+    while firstwin < *timedist.0 {
+        if firstwin * (timedist.0 - firstwin) > *timedist.1 {
+            break;
+        }
+        firstwin += 1;
+    }
+    let loosing_games = (firstwin - 1) * 2 + 1;
+    timedist.0 - loosing_games
+}
+
+fn day6_1(input: &str) -> i32 {
+    let mut lines = input.lines();
+    let times: Vec<i32> = lines
+        .next()
+        .unwrap()
+        .split(':')
+        .last()
+        .unwrap()
+        .split_ascii_whitespace()
+        .map(|x| x.parse().unwrap())
+        .collect();
+    let win_distances: Vec<i32> = lines
+        .next()
+        .unwrap()
+        .split(':')
+        .last()
+        .unwrap()
+        .split_ascii_whitespace()
+        .map(|x| x.parse().unwrap())
+        .collect();
+
+    let racetimedist = times.iter().zip(win_distances.iter());
+    let racedistances: Vec<i32> = racetimedist.map(day6get_racedistances).collect();
+    racedistances.iter().product()
+}
+
+fn day6_2(input: &str) -> i64 {
+    let mut lines = input.lines();
+    let time: i64 = lines
+        .next()
+        .unwrap()
+        .split(':')
+        .last()
+        .unwrap()
+        .replace(" ", "")
+        .parse()
+        .unwrap();
+    let win_distance: i64 = lines
+        .next()
+        .unwrap()
+        .split(':')
+        .last()
+        .unwrap()
+        .replace(" ", "")
+        .parse()
+        .unwrap();
+    day6fast_racedistances((&time, &win_distance))
+}
+
+fn day6() {
+    let data =
+        std::fs::read_to_string("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day6.txt")
+            .expect("Data for day6-Problem not found");
+
+    println!("{}", day6_1(&data));
+    println!("{}", day6_2(&data));
 }
 
 fn main() {
@@ -729,6 +741,8 @@ fn main() {
     day4();
     println!("Day5 results:");
     day5();
+    println!("Day6 results:");
+    day6();
 }
 
 /*
