@@ -536,7 +536,7 @@ fn day5_2(input: &str) -> i64 {
         let start = source.pop().unwrap();
         ranges.push((start, length));
     }
-    println!("{:?}", ranges);
+    //println!("{:?}", ranges);
     let transformation_blocks = input.split("map:");
     let mut mappings: Vec<Vec<Day5tf>> = vec![];
     for tf in transformation_blocks {
@@ -556,14 +556,81 @@ fn day5_2(input: &str) -> i64 {
         }
         mappings.push(transformations);
     }
-    mappings.reverse();
     //day5transform_ranges_rec(ranges.pop().unwrap(), ranges, &mut mappings);
-    0
+    //println!("{:?}", ranges);
+    for mapping in mappings {
+        let mut switch_ranges: Vec<(i64, i64)> = vec![];
+        for range in ranges {
+            switch_ranges.append(&mut day5apply_mapping(range, &mapping));
+        }
+        ranges = switch_ranges;
+        //println!("{:?}", ranges);
+    }
+    ranges.iter().map(|x| x.0).min().unwrap()
 }
 
-fn day5apply_mapping(seeds: &(i64, i64), mapping: &Vec<Day5tf>) -> Vec<(i64, i64)> {
+fn day5apply_mapping(seeds: (i64, i64), mapping: &Vec<Day5tf>) -> Vec<(i64, i64)> {
+    //println!("Mapping: {:?}", mapping);
     let mut result: Vec<(i64, i64)> = vec![];
-    let mut originalrest = seeds;
+    let mut ranges_to_test: Vec<(i64, i64)> = vec![seeds];
+    while !ranges_to_test.is_empty() {
+        let originalrest = ranges_to_test.pop().unwrap();
+        let mut splitted = false;
+        //println!("Ranges to test: {:?}", ranges_to_test);
+        //println!("Now testing: {:?}", originalrest);
+        for tf in mapping {
+            if tf.source + tf.range <= originalrest.0
+                || tf.source >= originalrest.0 + originalrest.1
+            {
+                continue;
+            }
+            splitted = true;
+            let diff = tf.destination - tf.source;
+            if tf.source <= originalrest.0 {
+                //println!("tfs<orig");
+                if tf.source + tf.range >= originalrest.0 + originalrest.1 {
+                    //println!("komplett enthalten");
+                    result.push((originalrest.0 + diff, originalrest.1));
+                } else {
+                    //println!("aufteilung");
+                    let splitposition = tf.source + tf.range - originalrest.0;
+                    result.push((originalrest.0 + diff, splitposition));
+                    ranges_to_test.push((
+                        originalrest.0 + splitposition,
+                        originalrest.1 - splitposition,
+                    ));
+                }
+            } else {
+                // tf.source > originalrest.0
+                //println!("tfs<orig");
+                if tf.source + tf.range >= originalrest.0 + originalrest.1 {
+                    //println!("aufteilung in zwei");
+                    let splitposition = originalrest.0 + originalrest.1 - tf.source;
+                    result.push((tf.source + diff, splitposition));
+                    ranges_to_test.push((originalrest.0, originalrest.1 - splitposition));
+                } else {
+                    //println!("aufteilung in drei");
+                    result.push((tf.source + diff, tf.range));
+                    ranges_to_test.push((originalrest.0, tf.source - originalrest.0));
+                    ranges_to_test.push((
+                        tf.source + tf.range,
+                        originalrest.0 + originalrest.1 - tf.source - tf.range,
+                    ));
+                }
+            }
+        }
+        if !splitted {
+            result.push(originalrest);
+        }
+    }
+
+    result
+}
+
+/*
+fn day5apply_mapping_rec(seeds: (i64, i64), mapping: &Vec<Day5tf>) -> Vec<(i64, i64)> {
+    let mut result: Vec<(i64, i64)> = vec![];
+    let originalrest = seeds;
     for tf in mapping {
         if tf.source + tf.range < originalrest.0 || tf.source > originalrest.0 + originalrest.1 {
             continue;
@@ -578,8 +645,8 @@ fn day5apply_mapping(seeds: &(i64, i64), mapping: &Vec<Day5tf>) -> Vec<(i64, i64
                 result.push((originalrest.0 + diff, splitposition));
                 //originalrest.0+=splitposition+1;
                 //originalrest.1-=splitposition;
-                result.append(&mut day5apply_mapping(
-                    &(
+                result.append(&mut day5apply_mapping_rec(
+                    (
                         originalrest.0 + splitposition + 1,
                         originalrest.1 - splitposition,
                     ),
@@ -591,19 +658,19 @@ fn day5apply_mapping(seeds: &(i64, i64), mapping: &Vec<Day5tf>) -> Vec<(i64, i64
             if tf.source + tf.range >= originalrest.0 + originalrest.1 {
                 let splitposition = originalrest.0 + originalrest.1 - tf.source;
                 result.push((tf.source + diff, splitposition));
-                result.append(&mut day5apply_mapping(
-                    &(originalrest.0, originalrest.1 - splitposition),
+                result.append(&mut day5apply_mapping_rec(
+                    (originalrest.0, originalrest.1 - splitposition),
                     mapping,
                 ));
             } else {
                 let splitposition = originalrest.0 + originalrest.1 - tf.source;
                 result.push((tf.source, splitposition));
-                result.append(&mut day5apply_mapping(
-                    &(originalrest.0, originalrest.1 - splitposition),
+                result.append(&mut day5apply_mapping_rec(
+                    (originalrest.0, originalrest.1 - splitposition),
                     mapping,
                 ));
-                result.append(&mut day5apply_mapping(
-                    &(
+                result.append(&mut day5apply_mapping_rec(
+                    (
                         tf.source + splitposition + 1,
                         originalrest.0 + originalrest.1 - splitposition - tf.source,
                     ),
@@ -613,11 +680,10 @@ fn day5apply_mapping(seeds: &(i64, i64), mapping: &Vec<Day5tf>) -> Vec<(i64, i64
         }
     }
 
-    result.push(*originalrest);
+    result.push(originalrest);
     result
 }
 
-/*
 fn day5transform_ranges_rec(
     testseeds: (i64, i64),
     restseeds: Vec<(i64, i64)>,
@@ -634,7 +700,7 @@ fn day5transform_ranges_rec(
         // apply first mapping then call with new ranges and rest of mappings
         let act_mapping = mappings.pop().unwrap();
         println!("Vor apply: {:?}", testseeds);
-        let mut new_ranges = day5apply_mapping(&testseeds, &act_mapping);
+        let mut new_ranges = day5apply_mapping_rec(&testseeds, &act_mapping);
         println!("nach apply: {:?}", new_ranges);
         return day5transform_ranges_rec(new_ranges.pop().unwrap(), new_ranges, mappings);
     }
@@ -649,7 +715,7 @@ fn day5() {
             .expect("Data for day5-Problem not found");
 
     println!("{}", day5_1(&data));
-    //println!("{}", day5_2(&data));
+    println!("{}", day5_2(&data));
 }
 
 fn main() {
