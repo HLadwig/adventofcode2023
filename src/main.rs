@@ -1,3 +1,5 @@
+use std::{cmp::Ordering, collections::HashSet};
+
 #[test]
 fn day1tests() {
     let data = std::fs::read_to_string(
@@ -660,7 +662,6 @@ fn day6get_racedistances(timedist: (&i32, &i32)) -> i32 {
 }
 
 fn day6fast_racedistances(timedist: (&i64, &i64)) -> i64 {
-    let mut result = 0;
     let mut firstwin = 1;
     while firstwin < *timedist.0 {
         if firstwin * (timedist.0 - firstwin) > *timedist.1 {
@@ -668,7 +669,7 @@ fn day6fast_racedistances(timedist: (&i64, &i64)) -> i64 {
         }
         firstwin += 1;
     }
-    let loosing_games = (firstwin - 1) * 2 + 1;
+    let loosing_games = (firstwin - 1) * 2 + 1; // add the 1 for the last game since the 0 game isn't counted
     timedist.0 - loosing_games
 }
 
@@ -730,6 +731,159 @@ fn day6() {
     println!("{}", day6_2(&data));
 }
 
+#[test]
+fn day7tests() {
+    let data = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day7test.txt",
+    )
+    .expect("Data for day7-Test not found");
+
+    assert_eq!(day7_1(&data), 6440);
+    assert_eq!(day7_2(&data), 5905);
+}
+
+#[derive(Debug)]
+struct Day7hand {
+    cards: String,
+    bid: i32,
+    typ: i32, // values: (10,8,7,6,4,2,1); double of same cards, full house=7, and with pairs count the involved cards
+}
+
+impl Ord for Day7hand {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        if self.typ != other.typ {
+            return self.typ.cmp(&other.typ);
+        } else {
+            let order = "AKQJT98765432";
+            let strcmp = self.cards.chars().zip(other.cards.chars());
+            for pair in strcmp {
+                if pair.0 != pair.1 {
+                    let selfpos = order.find(pair.1).unwrap();
+                    let otherpos = order.find(pair.0).unwrap();
+                    return selfpos.cmp(&otherpos);
+                }
+            }
+            Ordering::Equal
+        }
+    }
+}
+
+impl PartialOrd for Day7hand {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if self.typ != other.typ {
+            return self.typ.partial_cmp(&other.typ);
+        } else {
+            let order = "AKQJT98765432";
+            let strcmp = self.cards.chars().zip(other.cards.chars());
+            for pair in strcmp {
+                if pair.0 != pair.1 {
+                    let selfpos = order.find(pair.1).unwrap();
+                    let otherpos = order.find(pair.0).unwrap();
+                    return selfpos.partial_cmp(&otherpos);
+                }
+            }
+            None
+        }
+    }
+}
+
+impl PartialEq for Day7hand {
+    fn eq(&self, other: &Self) -> bool {
+        self.cards == other.cards
+    }
+}
+
+impl Eq for Day7hand {}
+
+impl Day7hand {
+    fn new(hand: &str, typerule: &str) -> Self {
+        let mut parts = hand.split_ascii_whitespace();
+        let cards = String::from(parts.next().unwrap());
+        let bid = parts.next().unwrap().parse().unwrap();
+        let typ = get_type(&cards, typerule);
+        Self { cards, bid, typ }
+    }
+}
+
+fn get_type(cards: &str, typerule: &str) -> i32 {
+    let unique_cards = cards.chars().into_iter().collect::<HashSet<_>>();
+    let mut counts: Vec<i32> = vec![];
+    for c in unique_cards {
+        counts.push(cards.chars().filter(|&x| x == c).count() as i32);
+    }
+    if counts.contains(&5) {
+        return 10;
+    }
+    if counts.contains(&4) {
+        return 8;
+    }
+    if counts.contains(&3) && counts.contains(&2) {
+        return 7;
+    }
+    if counts.contains(&3) {
+        return 6;
+    }
+    if counts.contains(&2) && counts.len() == 3 {
+        return 4;
+    }
+    if counts.contains(&2) {
+        return 2;
+    }
+    1
+}
+
+fn day7_1(input: &str) -> i32 {
+    let mut hands: Vec<Day7hand> = input.lines().map(|x| Day7hand::new(x, "normal")).collect();
+    //println!("Unordered: {:?}", hands);
+    hands.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    //println!("Ordered: {:?}", hands);
+    let mut total_winnings = 0;
+    for (rank, hand) in hands.iter().enumerate() {
+        //println!("Rank: {:?} Hand: {:?}", rank, hand);
+        total_winnings += (rank as i32 + 1) * hand.bid;
+    }
+    total_winnings
+}
+
+fn jokercmp(lhs: &Day7hand, rhs: &Day7hand) -> std::cmp::Ordering {
+    if lhs.typ != rhs.typ {
+        return lhs.typ.cmp(&rhs.typ);
+    } else {
+        let order = "AKQT98765432J";
+        let strcmp = lhs.cards.chars().zip(rhs.cards.chars());
+        for pair in strcmp {
+            if pair.0 != pair.1 {
+                let lhspos = order.find(pair.1).unwrap();
+                let rhspos = order.find(pair.0).unwrap();
+                return lhspos.cmp(&rhspos);
+            }
+        }
+        Ordering::Equal
+    }
+}
+
+fn day7_2(input: &str) -> i32 {
+    let mut hands: Vec<Day7hand> = input.lines().map(|x| Day7hand::new(x, "joker")).collect();
+    //println!("Unordered: {:?}", hands);
+    hands.sort_by(|a, b| jokercmp(a, b));
+    //println!("Ordered: {:?}", hands);
+    let mut total_winnings = 0;
+    for (rank, hand) in hands.iter().enumerate() {
+        //println!("Rank: {:?} Hand: {:?}", rank, hand);
+        total_winnings += (rank as i32 + 1) * hand.bid;
+    }
+    total_winnings
+}
+
+fn day7() {
+    let data =
+        std::fs::read_to_string("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day7.txt")
+            .expect("Data for day7-Problem not found");
+
+    println!("{}", day7_1(&data));
+    //println!("{}", day7_2(&data));
+}
+
 fn main() {
     println!("Day1 results:");
     day1();
@@ -743,6 +897,8 @@ fn main() {
     day5();
     println!("Day6 results:");
     day6();
+    println!("Day7 results:");
+    day7();
 }
 
 /*
