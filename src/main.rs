@@ -796,46 +796,101 @@ impl PartialEq for Day7hand {
 impl Eq for Day7hand {}
 
 impl Day7hand {
-    fn new(hand: &str, typerule: &str) -> Self {
+    fn new(hand: &str, jokerrule: bool) -> Self {
         let mut parts = hand.split_ascii_whitespace();
         let cards = String::from(parts.next().unwrap());
         let bid = parts.next().unwrap().parse().unwrap();
-        let typ = get_type(&cards, typerule);
+        let typ = get_type(&cards, jokerrule);
         Self { cards, bid, typ }
     }
 }
 
-fn get_type(cards: &str, typerule: &str) -> i32 {
-    let unique_cards = cards.chars().into_iter().collect::<HashSet<_>>();
+fn get_type(cards: &str, jokerrule: bool) -> i32 {
+    let unique_cards = cards
+        .chars()
+        .into_iter()
+        .filter(|&x| if jokerrule { x != 'J' } else { true })
+        .collect::<HashSet<_>>();
     let mut counts: Vec<i32> = vec![];
     for c in unique_cards {
         counts.push(cards.chars().filter(|&x| x == c).count() as i32);
     }
+    let jokercount = cards.chars().filter(|&x| x == 'J').count();
+    //println!("Hand: {:?}, Jokercount: {:?}", cards, jokercount);
     if counts.contains(&5) {
         return 10;
     }
     if counts.contains(&4) {
+        if jokerrule && jokercount > 0 {
+            return 10;
+        }
         return 8;
     }
     if counts.contains(&3) && counts.contains(&2) {
         return 7;
     }
     if counts.contains(&3) {
+        if jokerrule && jokercount > 0 {
+            if jokercount == 2 {
+                return 10;
+            }
+            if jokercount == 1 {
+                return 8;
+            }
+        }
         return 6;
     }
-    if counts.contains(&2) && counts.len() == 3 {
+    if counts.contains(&2) && counts.len() <= 3 {
+        if jokerrule && jokercount > 0 {
+            if jokercount == 3 {
+                return 10;
+            }
+            if jokercount == 2 {
+                return 8;
+            }
+            if jokercount == 1 {
+                if counts.len() == 3 {
+                    return 6;
+                }
+                if counts.len() == 2 {
+                    return 7;
+                }
+            }
+        }
         return 4;
     }
     if counts.contains(&2) {
+        if jokerrule && jokercount > 0 {
+            if jokercount == 3 {
+                return 10;
+            }
+            if jokercount == 2 {
+                return 8;
+            }
+            if jokercount == 1 {
+                return 6;
+            }
+        }
         return 2;
+    }
+    if jokerrule && jokercount > 0 {
+        if jokercount == 5 {
+            return 10;
+        }
+        if jokercount > 1 {
+            return (jokercount as i32 + 1) * 2;
+        } else {
+            return 2;
+        }
     }
     1
 }
 
 fn day7_1(input: &str) -> i32 {
-    let mut hands: Vec<Day7hand> = input.lines().map(|x| Day7hand::new(x, "normal")).collect();
+    let mut hands: Vec<Day7hand> = input.lines().map(|x| Day7hand::new(x, false)).collect();
     //println!("Unordered: {:?}", hands);
-    hands.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    hands.sort();
+    //hands.sort_by(|a, b| a.partial_cmp(b).unwrap());
     //println!("Ordered: {:?}", hands);
     let mut total_winnings = 0;
     for (rank, hand) in hands.iter().enumerate() {
@@ -863,7 +918,7 @@ fn jokercmp(lhs: &Day7hand, rhs: &Day7hand) -> std::cmp::Ordering {
 }
 
 fn day7_2(input: &str) -> i32 {
-    let mut hands: Vec<Day7hand> = input.lines().map(|x| Day7hand::new(x, "joker")).collect();
+    let mut hands: Vec<Day7hand> = input.lines().map(|x| Day7hand::new(x, true)).collect();
     //println!("Unordered: {:?}", hands);
     hands.sort_by(|a, b| jokercmp(a, b));
     //println!("Ordered: {:?}", hands);
@@ -881,7 +936,7 @@ fn day7() {
             .expect("Data for day7-Problem not found");
 
     println!("{}", day7_1(&data));
-    //println!("{}", day7_2(&data));
+    println!("{}", day7_2(&data));
 }
 
 fn main() {
