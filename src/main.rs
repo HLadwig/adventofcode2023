@@ -1,4 +1,7 @@
-use std::{cmp::Ordering, collections::HashSet};
+use std::{
+    cmp::Ordering,
+    collections::{hash_map, HashSet},
+};
 
 #[test]
 fn day1tests() {
@@ -939,6 +942,86 @@ fn day7() {
     println!("{}", day7_2(&data));
 }
 
+#[test]
+fn day8tests() {
+    let data1 = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day8test1.txt",
+    )
+    .expect("Data for day8-Test1 not found");
+    let data2 = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day8test2.txt",
+    )
+    .expect("Data for day8-Test2 not found");
+    let data3 = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day8test3.txt",
+    )
+    .expect("Data for day8-Test3 not found");
+
+    assert_eq!(day8_1(&data1), 2);
+    assert_eq!(day8_1(&data2), 6);
+    //assert_eq!(day8_2(&data3), 6);
+}
+
+#[derive(Debug)]
+struct Day8node {
+    name: String,
+    left: String,
+    right: String,
+}
+
+impl Day8node {
+    fn new(line: &str) -> Self {
+        let mut parts = line.split(" = ");
+        let name = String::from(parts.next().unwrap());
+        let mut lrparts = parts.next().unwrap().split(", ");
+        let left = lrparts.next().unwrap().replace('(', "");
+        let right = lrparts.next().unwrap().replace(')', "");
+        Self { name, left, right }
+    }
+}
+
+fn day8_1(input: &str) -> i32 {
+    let mut lines = input.lines();
+    let movements = lines.next().unwrap();
+    lines.next();
+    //let nodes: Vec<Day8node> = lines.map(Day8node::new).collect();
+    let network: std::collections::HashMap<&str, Day8node> = lines
+        .map(|x| {
+            let newnode = Day8node::new(x);
+            let nodename = x.split(" = ").next().unwrap();
+            (nodename, newnode)
+        })
+        .collect();
+    let mut stepcount = 0;
+    let mut current_node_name = "AAA";
+    for step in movements.chars().cycle() {
+        let current_node = network.get(current_node_name).unwrap();
+        if step == 'L' {
+            current_node_name = current_node.left.as_str();
+        }
+        if step == 'R' {
+            current_node_name = current_node.right.as_str();
+        }
+        stepcount += 1;
+        if current_node_name == "ZZZ" {
+            break;
+        }
+    }
+
+    stepcount
+}
+
+//fn day8_2(input: &str) -> i32 {}
+
+fn day8() {
+    let data =
+        std::fs::read_to_string("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day8.txt")
+            .expect("Data for day8-Problem not found");
+
+    println!("{}", day8_1(&data));
+    //println!("{}", day8_2(&data));
+}
+
 fn main() {
     println!("Day1 results:");
     day1();
@@ -954,6 +1037,8 @@ fn main() {
     day6();
     println!("Day7 results:");
     day7();
+    println!("Day8 results:");
+    day8();
 }
 
 /*
