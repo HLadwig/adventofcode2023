@@ -1,7 +1,4 @@
-use std::{
-    cmp::Ordering,
-    collections::{hash_map, HashSet},
-};
+use std::{cmp::Ordering, collections::HashSet};
 
 #[test]
 fn day1tests() {
@@ -959,7 +956,7 @@ fn day8tests() {
 
     assert_eq!(day8_1(&data1), 2);
     assert_eq!(day8_1(&data2), 6);
-    //assert_eq!(day8_2(&data3), 6);
+    assert_eq!(day8_2(&data3), 6);
 }
 
 #[derive(Debug)]
@@ -1011,7 +1008,79 @@ fn day8_1(input: &str) -> i32 {
     stepcount
 }
 
-//fn day8_2(input: &str) -> i32 {}
+fn day8_2(input: &str) -> i64 {
+    let mut lines = input.lines();
+    let movements = lines.next().unwrap();
+    lines.next();
+    //let nodes: Vec<Day8node> = lines.map(Day8node::new).collect();
+    let network: std::collections::HashMap<&str, Day8node> = lines
+        .map(|x| {
+            let newnode = Day8node::new(x);
+            let nodename = x.split(" = ").next().unwrap();
+            (nodename, newnode)
+        })
+        .collect();
+    let current_node_names: Vec<&str> = network
+        .iter()
+        .filter(|x| x.0.ends_with("A"))
+        .map(|x| x.1.name.as_str())
+        .collect();
+    let mut step_pairs: Vec<(i64, i64)> = vec![];
+    for mut current_node_name in current_node_names {
+        let mut stepcount = 0;
+        let mut steps_first = 0;
+        for step in movements.chars().cycle() {
+            let current_node = network.get(current_node_name).unwrap();
+            if step == 'L' {
+                current_node_name = current_node.left.as_str();
+            }
+            if step == 'R' {
+                current_node_name = current_node.right.as_str();
+            }
+            stepcount += 1;
+            if current_node_name.ends_with('Z') {
+                if steps_first == 0 {
+                    steps_first = stepcount;
+                    stepcount = 0;
+                } else {
+                    step_pairs.push((steps_first, stepcount));
+                    break;
+                }
+            }
+        }
+    }
+    /*for step in movements.chars().cycle() {
+            let mut current_nodes: Vec<&Day8node> = vec![];
+            for node in current_node_names {
+                current_nodes.push(network.get(node).unwrap());
+            }
+            current_node_names = current_nodes
+                .iter()
+                .map(|x| {
+                    if step == 'L' {
+                        x.left.as_str()
+                    } else {
+                        x.right.as_str()
+                    }
+                })
+                .collect();
+
+            stepcount += 1;
+            if current_node_names.iter().all(|x| x.ends_with("Z")) {
+                break;
+            }
+    }*/
+    if step_pairs.iter().any(|x| x.0 != x.1) {
+        println!(
+            "Problem, first cycle is different from second {:?}",
+            step_pairs
+        );
+        return 0;
+    }
+    step_pairs
+        .iter()
+        .fold(1, |acc: i64, num: &(i64, i64)| num_integer::lcm(acc, num.0))
+}
 
 fn day8() {
     let data =
@@ -1019,7 +1088,7 @@ fn day8() {
             .expect("Data for day8-Problem not found");
 
     println!("{}", day8_1(&data));
-    //println!("{}", day8_2(&data));
+    println!("{}", day8_2(&data));
 }
 
 fn main() {
