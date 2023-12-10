@@ -1145,6 +1145,29 @@ fn day9get_prediction(sequence: &Vec<i32>) -> i32 {
     last_values.iter().sum()
 }
 
+fn day9get_backward_prediction(sequence: &Vec<i32>) -> i32 {
+    let mut arr: Vec<i32> = sequence.iter().rev().copied().collect();
+    let mut first_values: Vec<i32> = vec![];
+    let mut check_positions = arr.len() - 1;
+    while arr.iter().any(|&x| x != 0) {
+        first_values.push(arr[check_positions]); // *arr.first().unwrap());
+        for i in 0..check_positions {
+            arr[i] -= arr[i + 1];
+        }
+        arr[check_positions] = 0;
+        check_positions -= 1;
+    }
+    let mut prediction = 0;
+    for (position, value) in first_values.iter().enumerate() {
+        if position % 2 == 0 {
+            prediction += value;
+        } else {
+            prediction -= value;
+        }
+    }
+    prediction
+}
+
 fn day9_1(input: &str) -> i32 {
     let sequences: Vec<Vec<i32>> = input
         .lines()
@@ -1154,10 +1177,20 @@ fn day9_1(input: &str) -> i32 {
                 .collect()
         })
         .collect();
-    sequences.iter().map(|x| day9get_prediction(x)).sum()
+    sequences.iter().map(day9get_prediction).sum()
 }
 
-fn day9_2(input: &str) -> i32 {}
+fn day9_2(input: &str) -> i32 {
+    let sequences: Vec<Vec<i32>> = input
+        .lines()
+        .map(|x| {
+            x.split_ascii_whitespace()
+                .map(|x| x.parse().unwrap())
+                .collect()
+        })
+        .collect();
+    sequences.iter().map(day9get_backward_prediction).sum()
+}
 
 fn day9() {
     let data =
