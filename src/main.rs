@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashSet};
+use std::{cmp::Ordering, collections::HashSet, ops::Index};
 
 #[test]
 fn day1tests() {
@@ -1201,6 +1201,123 @@ fn day9() {
     println!("{}", day9_2(&data));
 }
 
+#[test]
+fn day10tests() {
+    let data1 =
+        std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day10test1.txt")
+            .expect("Data for day10-Test1 not found");
+    let data2 =
+        std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day10test2.txt")
+            .expect("Data for day10-Test2 not found");
+    assert_eq!(day10_1(&data1), 4);
+    assert_eq!(day10_1(&data2), 8);
+    //assert_eq!(day10_2(&data), 30);
+}
+
+fn day10_1(input: &Vec<u8>) -> i32 {
+    let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
+    let lines = input.len() / columns;
+    let start = input.iter().position(|&x| x == b'S').unwrap();
+    let ystart = start / columns;
+    let xstart = start - ystart * columns;
+    let mut xprev = xstart;
+    let mut yprev = ystart;
+    let mut xact = xstart + 1;
+    let mut yact = ystart;
+    let mut steps = 1;
+    while (xact, yact) != (xstart, ystart) {
+        let pos = yact * columns + xact;
+        /*println!(
+            "Prev at {:?} {:?} Now at {:?} {:?} {:?}",
+            xprev,
+            yprev,
+            xact,
+            yact,
+            String::from_utf8([input[pos]].to_vec())
+        );*/
+        match input[pos] {
+            b'L' => {
+                if yprev == yact - 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact += 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact -= 1;
+                }
+            }
+            b'F' => {
+                if yprev == yact + 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact += 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact += 1;
+                }
+            }
+            b'7' => {
+                if yprev == yact + 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact -= 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact += 1;
+                }
+            }
+            b'J' => {
+                if yprev == yact - 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact -= 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact -= 1;
+                }
+            }
+            b'|' => {
+                xprev = xact;
+                if yprev == yact - 1 {
+                    yprev = yact;
+                    yact += 1;
+                } else {
+                    yprev = yact;
+                    yact -= 1;
+                }
+            }
+            b'-' => {
+                yprev = yact;
+                if xprev == xact - 1 {
+                    xprev = xact;
+                    xact += 1;
+                } else {
+                    xprev = xact;
+                    xact -= 1;
+                }
+            }
+            _ => (),
+        }
+        steps += 1;
+    }
+
+    steps / 2
+}
+
+//fn day10_2(input: &str) -> i32 {}
+
+fn day10() {
+    let data = std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day10.txt")
+        .expect("Data for day10-Problem not found");
+
+    println!("{}", day10_1(&data));
+    //println!("{}", day10_2(&data));
+}
+
 fn main() {
     println!("Day1 results:");
     day1();
@@ -1220,6 +1337,8 @@ fn main() {
     day8();
     println!("Day9 results:");
     day9();
+    println!("Day10 results:");
+    day10();
 }
 
 /*
