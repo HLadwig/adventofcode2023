@@ -1091,6 +1091,83 @@ fn day8() {
     println!("{}", day8_2(&data));
 }
 
+#[test]
+fn day9tests() {
+    let data = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day9test.txt",
+    )
+    .expect("Data for day9-Test not found");
+
+    assert_eq!(day9_1(&data), 114);
+    assert_eq!(day9_2(&data), 2);
+}
+
+/*
+fn day9get_next_sequence(sequence: &[i32]) -> Vec<i32> {
+    let mut new_sequence = Vec::with_capacity(sequence.len() - 1);
+    let mut elements = sequence.iter().peekable();
+
+    while let Some(&first) = elements.next() {
+        if let Some(&second) = elements.peek() {
+            new_sequence.push(second - first);
+        }
+    }
+
+    new_sequence
+}
+
+fn day9get_prediction(mut sequence: &Vec<i32>) -> i32 {
+    let mut last_value = Vec::new();
+
+    while sequence.iter().any(|&x| x != 0) {
+        let mut temp: Vec<i32> = vec![];
+        last_value.push(sequence.last().copied().unwrap());
+        temp = day9get_next_sequence(sequence);
+        sequence = &temp;
+    }
+
+    last_value.iter().sum()
+}
+ */
+
+fn day9get_prediction(sequence: &Vec<i32>) -> i32 {
+    let mut arr: Vec<i32> = sequence.iter().rev().copied().collect();
+    let mut last_values: Vec<i32> = vec![];
+    let mut check_positions = arr.len() - 1;
+    while arr.iter().any(|&x| x != 0) {
+        last_values.push(arr[0]); // *arr.first().unwrap());
+        for i in 0..check_positions {
+            arr[i] -= arr[i + 1];
+        }
+        arr[check_positions] = 0;
+        check_positions -= 1;
+    }
+    last_values.iter().sum()
+}
+
+fn day9_1(input: &str) -> i32 {
+    let sequences: Vec<Vec<i32>> = input
+        .lines()
+        .map(|x| {
+            x.split_ascii_whitespace()
+                .map(|x| x.parse().unwrap())
+                .collect()
+        })
+        .collect();
+    sequences.iter().map(|x| day9get_prediction(x)).sum()
+}
+
+fn day9_2(input: &str) -> i32 {}
+
+fn day9() {
+    let data =
+        std::fs::read_to_string("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day9.txt")
+            .expect("Data for day9-Problem not found");
+
+    println!("{}", day9_1(&data));
+    println!("{}", day9_2(&data));
+}
+
 fn main() {
     println!("Day1 results:");
     day1();
@@ -1108,6 +1185,8 @@ fn main() {
     day7();
     println!("Day8 results:");
     day8();
+    println!("Day9 results:");
+    day9();
 }
 
 /*
