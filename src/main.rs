@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashSet, ops::Index};
+use std::{cmp::Ordering, collections::HashSet};
 
 #[test]
 fn day1tests() {
@@ -1209,14 +1209,25 @@ fn day10tests() {
     let data2 =
         std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day10test2.txt")
             .expect("Data for day10-Test2 not found");
+    let mut data3 =
+        std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day10test3.txt")
+            .expect("Data for day10-Test2 not found");
+    let mut data4 =
+        std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day10test4.txt")
+            .expect("Data for day10-Test2 not found");
+    let mut data5 =
+        std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day10test5.txt")
+            .expect("Data for day10-Test2 not found");
     assert_eq!(day10_1(&data1), 4);
     assert_eq!(day10_1(&data2), 8);
-    //assert_eq!(day10_2(&data), 30);
+    assert_eq!(day10_2(&mut data3), 4);
+    assert_eq!(day10_2(&mut data4), 8);
+    assert_eq!(day10_2(&mut data5), 10);
 }
 
 fn day10_1(input: &Vec<u8>) -> i32 {
     let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
-    let lines = input.len() / columns;
+    let _lines = input.len() / columns;
     let start = input.iter().position(|&x| x == b'S').unwrap();
     let ystart = start / columns;
     let xstart = start - ystart * columns;
@@ -1227,14 +1238,6 @@ fn day10_1(input: &Vec<u8>) -> i32 {
     let mut steps = 1;
     while (xact, yact) != (xstart, ystart) {
         let pos = yact * columns + xact;
-        /*println!(
-            "Prev at {:?} {:?} Now at {:?} {:?} {:?}",
-            xprev,
-            yprev,
-            xact,
-            yact,
-            String::from_utf8([input[pos]].to_vec())
-        );*/
         match input[pos] {
             b'L' => {
                 if yprev == yact - 1 {
@@ -1308,14 +1311,402 @@ fn day10_1(input: &Vec<u8>) -> i32 {
     steps / 2
 }
 
-//fn day10_2(input: &str) -> i32 {}
+fn day10_2(input: &mut Vec<u8>) -> usize {
+    let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
+    let lines = input.len() / columns;
+    let start = input.iter().position(|&x| x == b'S').unwrap();
+    let ystart = start / columns;
+    let xstart = start - ystart * columns;
+    let mut xprev = xstart;
+    let mut yprev = ystart;
+    let mut xact = xstart;
+    let mut yact = ystart;
+    day10print_map(input, columns, lines);
+    // find out to which two fields is the connection from the starting point
+    // and set xact/yact and the symbol accordingly
+    // we just assume S isn't on any edge
+    let mut test = input[start + 1];
+    if test == b'-' || test == b'J' || test == b'7' {
+        xact += 1;
+    } else {
+        test = input[start - 1];
+        if test == b'-' || test == b'F' || test == b'L' {
+            xact -= 1;
+        } else {
+            yact += 1;
+        }
+    }
+    let mut loop_points: Vec<usize> = vec![];
+    loop_points.push(start);
+    let mut right_turns = 0;
+    while (xact, yact) != (xstart, ystart) {
+        let pos = yact * columns + xact;
+        let symbol = input[pos];
+        loop_points.push(pos);
+        match symbol {
+            b'L' => {
+                if yprev == yact - 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact += 1;
+                    right_turns -= 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact -= 1;
+                    right_turns += 1;
+                }
+            }
+            b'F' => {
+                if yprev == yact + 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact += 1;
+                    right_turns += 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact += 1;
+                    right_turns -= 1;
+                }
+            }
+            b'7' => {
+                if yprev == yact + 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact -= 1;
+                    right_turns -= 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact += 1;
+                    right_turns += 1;
+                }
+            }
+            b'J' => {
+                if yprev == yact - 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact -= 1;
+                    right_turns += 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact -= 1;
+                    right_turns -= 1;
+                }
+            }
+            b'|' => {
+                xprev = xact;
+                if yprev == yact - 1 {
+                    yprev = yact;
+                    yact += 1;
+                } else {
+                    yprev = yact;
+                    yact -= 1;
+                }
+            }
+            b'-' => {
+                yprev = yact;
+                if xprev == xact - 1 {
+                    xprev = xact;
+                    xact += 1;
+                } else {
+                    xprev = xact;
+                    xact -= 1;
+                }
+            }
+            _ => (),
+        }
+    }
+    loop_points.sort();
+    xprev = xstart;
+    yprev = ystart;
+    xact = xstart;
+    yact = ystart;
+    // find out to which two fields is the connection from the starting point
+    // and set xact/yact and the symbol accordingly
+    // we just assume S isn't on any edge
+    test = input[start + 1];
+    if test == b'-' || test == b'J' || test == b'7' {
+        xact += 1;
+    } else {
+        test = input[start - 1];
+        if test == b'-' || test == b'F' || test == b'L' {
+            xact -= 1;
+        } else {
+            yact += 1;
+        }
+    }
+    while (xact, yact) != (xstart, ystart) {
+        let pos = yact * columns + xact;
+        let symbol = input[pos];
+        input[pos] = b'#';
+        match symbol {
+            b'L' => {
+                if yprev == yact - 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact += 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact -= 1;
+                }
+            }
+            b'F' => {
+                if yprev == yact + 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact += 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact += 1;
+                }
+            }
+            b'7' => {
+                if yprev == yact + 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact -= 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact += 1;
+                }
+            }
+            b'J' => {
+                if yprev == yact - 1 {
+                    yprev = yact;
+                    xprev = xact;
+                    xact -= 1;
+                } else {
+                    xprev = xact;
+                    yprev = yact;
+                    yact -= 1;
+                }
+            }
+            b'|' => {
+                xprev = xact;
+                if yprev == yact - 1 {
+                    yprev = yact;
+                    yact += 1;
+                    if right_turns > 0 {
+                        if !loop_points.contains(&(pos - 1)) {
+                            input[pos - 1] = b'I';
+                        }
+                    } else {
+                        if !loop_points.contains(&(pos + 1)) {
+                            input[pos + 1] = b'I';
+                        }
+                    }
+                } else {
+                    yprev = yact;
+                    yact -= 1;
+                    if right_turns < 0 {
+                        if !loop_points.contains(&(pos - 1)) {
+                            input[pos - 1] = b'I';
+                        }
+                    } else {
+                        if !loop_points.contains(&(pos + 1)) {
+                            input[pos + 1] = b'I';
+                        }
+                    }
+                }
+                day10print_map(input, columns, lines);
+            }
+            b'-' => {
+                yprev = yact;
+                if xprev == xact - 1 {
+                    xprev = xact;
+                    xact += 1;
+                    if right_turns < 0 {
+                        if !loop_points.contains(&(pos - columns)) {
+                            input[pos - columns] = b'I';
+                        }
+                    } else {
+                        if !loop_points.contains(&(pos + columns)) {
+                            input[pos + columns] = b'I';
+                        }
+                    }
+                } else {
+                    xprev = xact;
+                    xact -= 1;
+                    if right_turns > 0 {
+                        if !loop_points.contains(&(pos - columns)) {
+                            input[pos - columns] = b'I';
+                        }
+                    } else {
+                        if !loop_points.contains(&(pos + columns)) {
+                            input[pos + columns] = b'I';
+                        }
+                    }
+                }
+                day10print_map(input, columns, lines);
+            }
+            _ => (),
+        }
+    }
+    day10print_map(input, columns, lines);
+    input.iter().filter(|&&x| x == b'I').count()
+}
+
+fn day10print_map(input: &Vec<u8>, columns: usize, lines: usize) {
+    for i in 0..lines {
+        let line = i * columns;
+        println!(
+            "{:?}",
+            String::from_utf8(input[line..line + columns].to_vec()).unwrap()
+        );
+    }
+    println!();
+}
+
+/* the standard does the expected
+fn loop_points_cmp(lhs: &(usize, usize), rhs: &(usize, usize)) -> std::cmp::Ordering {
+    if lhs.0 != rhs.0 {
+        lhs.0.cmp(&rhs.0)
+    } else {
+        lhs.1.cmp(&rhs.1)
+    }
+}
+*/
 
 fn day10() {
-    let data = std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day10.txt")
-        .expect("Data for day10-Problem not found");
+    let mut data =
+        std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day10.txt")
+            .expect("Data for day10-Problem not found");
 
     println!("{}", day10_1(&data));
-    //println!("{}", day10_2(&data));
+    //println!("{}", day10_2(&mut data));
+}
+
+#[test]
+fn day11tests() {
+    let data =
+        std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day11test.txt")
+            .expect("Data for day11-Test not found");
+
+    assert_eq!(day11_1(&data), 374);
+    //assert_eq!(day11_2(&data), 30);
+}
+
+fn day11_1(input: &Vec<u8>) -> usize {
+    let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
+    let lines = input.len() / columns;
+    let mut horvec: Vec<usize> = vec![];
+    let mut vervec: Vec<usize> = vec![];
+    for i in 0..lines {
+        let startpoint = i * columns;
+        let line = &input[startpoint..startpoint + columns];
+        //println!("{:?})", String::from_utf8_lossy(line));
+        horvec.push(
+            line.iter()
+                .filter(|&&x| x == b'#')
+                .collect::<Vec<&u8>>()
+                .iter()
+                .count(),
+        );
+    }
+    for i in 0..columns - 2 {
+        let mut counter = 0;
+        for j in 0..lines {
+            let pos = j * columns + i;
+            if input[pos] == b'#' {
+                counter += 1
+            }
+        }
+        vervec.push(counter);
+    }
+    /*day11double_zeroes(&mut horvec);
+    day11double_zeroes(&mut vervec);
+    day11compute_distance(&horvec) + day11compute_distance(&vervec)*/
+    day11compute_distance_with_drift(&horvec, 2) + day11compute_distance_with_drift(&vervec, 2)
+}
+
+fn day11compute_distance(vector: &Vec<usize>) -> usize {
+    let mut sum: usize = 0;
+    for i in 0..vector.len() {
+        let mut dist: usize = 0;
+        let num = vector[i];
+        for j in i..vector.len() {
+            sum += num * dist * vector[j];
+            dist += 1;
+        }
+    }
+    sum
+}
+
+fn day11compute_distance_with_drift(vector: &Vec<usize>, drift: usize) -> usize {
+    let mut sum: usize = 0;
+    for i in 0..vector.len() {
+        let mut dist: usize = 0;
+        let num = vector[i];
+        for j in i..vector.len() {
+            sum += num * dist * vector[j];
+            if vector[j] == 0 {
+                dist += drift;
+            } else {
+                dist += 1;
+            }
+        }
+    }
+    sum
+}
+
+fn day11double_zeroes(vector: &mut Vec<usize>) {
+    let mut zero_positions: Vec<usize> = vec![];
+    for (i, x) in vector.iter().enumerate() {
+        if *x == 0 {
+            zero_positions.push(i);
+        }
+    }
+    while zero_positions.len() > 0 {
+        vector.insert(zero_positions.pop().unwrap(), 0);
+    }
+}
+
+fn day11_2(input: &Vec<u8>) -> usize {
+    let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
+    let lines = input.len() / columns;
+    let mut horvec: Vec<usize> = vec![];
+    let mut vervec: Vec<usize> = vec![];
+    for i in 0..lines {
+        let startpoint = i * columns;
+        let line = &input[startpoint..startpoint + columns];
+        //println!("{:?})", String::from_utf8_lossy(line));
+        horvec.push(
+            line.iter()
+                .filter(|&&x| x == b'#')
+                .collect::<Vec<&u8>>()
+                .iter()
+                .count(),
+        );
+    }
+    for i in 0..columns - 2 {
+        let mut counter = 0;
+        for j in 0..lines {
+            let pos = j * columns + i;
+            if input[pos] == b'#' {
+                counter += 1
+            }
+        }
+        vervec.push(counter);
+    }
+    /*day11double_zeroes(&mut horvec);
+    day11double_zeroes(&mut vervec);
+    day11compute_distance(&horvec) + day11compute_distance(&vervec)*/
+    day11compute_distance_with_drift(&horvec, 1000000)
+        + day11compute_distance_with_drift(&vervec, 1000000)
+}
+
+fn day11() {
+    let data = std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day11.txt")
+        .expect("Data for day11-Problem not found");
+
+    println!("{}", day11_1(&data));
+    println!("{}", day11_2(&data));
 }
 
 fn main() {
@@ -1339,6 +1730,8 @@ fn main() {
     day9();
     println!("Day10 results:");
     day10();
+    println!("Day11 results:");
+    day11();
 }
 
 /*
