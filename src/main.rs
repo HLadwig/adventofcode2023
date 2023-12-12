@@ -1619,10 +1619,11 @@ fn day11_1(input: &Vec<u8>) -> usize {
         }
         vervec.push(counter);
     }
-    /*day11double_zeroes(&mut horvec);
+    day11double_zeroes(&mut horvec);
     day11double_zeroes(&mut vervec);
-    day11compute_distance(&horvec) + day11compute_distance(&vervec)*/
-    day11compute_distance_with_drift(&horvec, 2) + day11compute_distance_with_drift(&vervec, 2)
+    day11compute_distance(&horvec) + day11compute_distance(&vervec)
+    //leaving the first solution in, just for the record; could of course be replaced with the following
+    //day11compute_distance_with_drift(&horvec, 2) + day11compute_distance_with_drift(&vervec, 2)
 }
 
 fn day11compute_distance(vector: &Vec<usize>) -> usize {
@@ -1694,9 +1695,6 @@ fn day11_2(input: &Vec<u8>) -> usize {
         }
         vervec.push(counter);
     }
-    /*day11double_zeroes(&mut horvec);
-    day11double_zeroes(&mut vervec);
-    day11compute_distance(&horvec) + day11compute_distance(&vervec)*/
     day11compute_distance_with_drift(&horvec, 1000000)
         + day11compute_distance_with_drift(&vervec, 1000000)
 }
