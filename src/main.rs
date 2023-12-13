@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashSet};
+use std::{cmp::Ordering, collections::HashSet, str::FromStr};
 
 #[test]
 fn day1tests() {
@@ -1707,6 +1707,108 @@ fn day11() {
     println!("{}", day11_2(&data));
 }
 
+#[test]
+fn day13tests() {
+    let data = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day13test.txt",
+    )
+    .expect("Data for day13-Test not found");
+
+    assert_eq!(day13_1(&data), 405);
+    //assert_eq!(day13_2(&data), 30);
+}
+
+#[derive(Debug)]
+struct Day13note {
+    note: String,
+}
+
+impl Day13note {
+    fn new(input: &str) -> Day13note {
+        Self {
+            note: String::from_str(input).unwrap(),
+        }
+    }
+
+    fn transpose(&self) -> Self {
+        let lines: Vec<&str> = self.note.lines().collect();
+        let linelength = lines[0].len();
+        let mut new_lines: Vec<char> = vec![];
+        for i in 0..linelength {
+            let mut colline: Vec<char> = lines.iter().map(|&x| x.chars().nth(i).unwrap()).collect();
+            new_lines.append(&mut colline);
+            new_lines.push('\r');
+            new_lines.push('\n');
+        }
+        Self {
+            note: new_lines.into_iter().collect(),
+        }
+    }
+
+    fn get_possible_mirror_line(&self) -> Vec<usize> {
+        let mut index_of_identical: Vec<usize> = vec![];
+        let lines: Vec<&str> = self.note.lines().collect();
+        let mut last_line = lines[0];
+        let mut count = 0;
+        for i in 1..lines.len() {
+            count += 1;
+            if last_line == lines[i] {
+                index_of_identical.push(count);
+            }
+            last_line = lines[i];
+        }
+        /*match index_of_identical.len() {
+                    0 => 0,
+                    1 => index_of_identical[0],
+                    _ => index_of_identical[index_of_identical.len() / 2],
+        }*/
+        index_of_identical
+    }
+
+    fn get_mirror_line(&self) -> usize {
+        'outer: for check_line in self.get_possible_mirror_line() {
+            if check_line < 2 {
+                return check_line;
+            }
+            let lines: Vec<&str> = self.note.lines().collect();
+            let mut back = check_line - 2;
+            let mut fore = check_line + 1;
+            while fore < lines.len() {
+                if lines[back] != lines[fore] {
+                    continue 'outer;
+                };
+                if back == 0 {
+                    break;
+                }
+                back -= 1;
+                fore += 1;
+            }
+            return check_line;
+        }
+        0
+    }
+}
+
+fn day13_1(input: &str) -> usize {
+    let set_breaks = input.replace("\r\n\r\n", "|");
+    let notes: Vec<Day13note> = set_breaks.split(|x| x == '|').map(Day13note::new).collect();
+    let linesum: usize = notes.iter().map(|x| x.get_mirror_line()).sum();
+    let colsum: usize = notes.iter().map(|x| x.transpose().get_mirror_line()).sum();
+    colsum + linesum * 100
+}
+
+//fn day13_2(input: &str) -> i32 {}
+
+fn day13() {
+    let data = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day13.txt",
+    )
+    .expect("Data for day13-Problem not found");
+
+    println!("{}", day13_1(&data));
+    //println!("{}", day13_2(&data));
+}
+
 fn main() {
     println!("Day1 results:");
     day1();
@@ -1730,6 +1832,10 @@ fn main() {
     day10();
     println!("Day11 results:");
     day11();
+    println!("Day12 skipped");
+    //day12();
+    println!("Day13 results:");
+    day13();
 }
 
 /*
