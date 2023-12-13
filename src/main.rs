@@ -1715,7 +1715,7 @@ fn day13tests() {
     .expect("Data for day13-Test not found");
 
     assert_eq!(day13_1(&data), 405);
-    //assert_eq!(day13_2(&data), 30);
+    assert_eq!(day13_2(&data), 400);
 }
 
 #[derive(Debug)]
@@ -1757,11 +1757,6 @@ impl Day13note {
             }
             last_line = lines[i];
         }
-        /*match index_of_identical.len() {
-                    0 => 0,
-                    1 => index_of_identical[0],
-                    _ => index_of_identical[index_of_identical.len() / 2],
-        }*/
         index_of_identical
     }
 
@@ -1787,6 +1782,54 @@ impl Day13note {
         }
         0
     }
+
+    fn get_possible_smudge_mirror_line(&self) -> Vec<usize> {
+        let mut index_of_identical: Vec<usize> = vec![];
+        let lines: Vec<&str> = self.note.lines().collect();
+        let mut last_line = lines[0];
+        let mut count = 0;
+        for i in 1..lines.len() {
+            count += 1;
+            if day13diff(last_line, lines[i]) < 2 {
+                index_of_identical.push(count);
+            }
+            last_line = lines[i];
+        }
+        index_of_identical
+    }
+
+    fn get_smudge_mirror_line(&self) -> usize {
+        for check_line in self.get_possible_smudge_mirror_line() {
+            let mut diff_count = 0;
+            let lines: Vec<&str> = self.note.lines().collect();
+            let mut back = check_line - 1;
+            let mut fore = check_line;
+            while fore < lines.len() {
+                diff_count += day13diff(lines[back], lines[fore]);
+                if back == 0 {
+                    break;
+                }
+                back -= 1;
+                fore += 1;
+            }
+            if diff_count == 1 {
+                return check_line;
+            }
+        }
+        0
+    }
+}
+
+fn day13diff(lhs: &str, rhs: &str) -> usize {
+    let lhschars = lhs.as_bytes();
+    let rhschars = rhs.as_bytes();
+    let mut differences = 0;
+    for i in 0..lhschars.len() {
+        if lhschars[i] != rhschars[i] {
+            differences += 1;
+        }
+    }
+    differences
 }
 
 fn day13_1(input: &str) -> usize {
@@ -1797,7 +1840,16 @@ fn day13_1(input: &str) -> usize {
     colsum + linesum * 100
 }
 
-//fn day13_2(input: &str) -> i32 {}
+fn day13_2(input: &str) -> usize {
+    let set_breaks = input.replace("\r\n\r\n", "|");
+    let notes: Vec<Day13note> = set_breaks.split(|x| x == '|').map(Day13note::new).collect();
+    let linesum: usize = notes.iter().map(|x| x.get_smudge_mirror_line()).sum();
+    let colsum: usize = notes
+        .iter()
+        .map(|x| x.transpose().get_smudge_mirror_line())
+        .sum();
+    colsum + linesum * 100
+}
 
 fn day13() {
     let data = std::fs::read_to_string(
@@ -1806,7 +1858,7 @@ fn day13() {
     .expect("Data for day13-Problem not found");
 
     println!("{}", day13_1(&data));
-    //println!("{}", day13_2(&data));
+    println!("{}", day13_2(&data));
 }
 
 fn main() {
