@@ -1894,8 +1894,8 @@ fn day14_1(input: &Vec<u8>) -> usize {
 fn day14_2(input: &mut Vec<u8>) -> usize {
     let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
     let lines = input.len() / columns;
+    let mut first_cycle = vec![];
     for i in 0..1000000000 {
-        let previous_cycle = input.clone();
         // north
         for i in 0..columns - 2 {
             let mut set_line = 0;
@@ -1940,7 +1940,9 @@ fn day14_2(input: &mut Vec<u8>) -> usize {
                     if set_line != j {
                         input[j * columns + i] = b'.';
                     }
-                    set_line -= 1;
+                    if set_line >= 1 {
+                        set_line -= 1;
+                    }
                 }
                 if content == b'#' && j > 0 {
                     set_line = j - 1;
@@ -1957,32 +1959,38 @@ fn day14_2(input: &mut Vec<u8>) -> usize {
                     if set_column != j {
                         input[i * columns + j] = b'.';
                     }
-                    set_column -= 1;
+                    if set_column >= 1 {
+                        set_column -= 1;
+                    }
                 }
                 if content == b'#' && j > 0 {
                     set_column = j - 1;
                 }
             }
         }
-        let matching = previous_cycle
+        let matching = first_cycle
             .iter()
             .zip(input.iter())
             .filter(|&(a, b)| a == b)
             .count();
-        if matching == previous_cycle.len() && matching == input.len() {
+        if matching == first_cycle.len() && matching == input.len() {
+            println!("Cycle after {:?}", i);
             break;
         }
-        day10print_map(input, columns, lines);
+        if i == 100 {
+            first_cycle = input.clone();
+        }
     }
     day14_1(input)
 }
 
 fn day14() {
-    let data = std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day14.txt")
-        .expect("Data for day14-Problem not found");
+    let mut data =
+        std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day14.txt")
+            .expect("Data for day14-Problem not found");
 
     println!("{}", day14_1(&data));
-    //println!("{}", day14_2(&data));
+    println!("{}", day14_2(&mut data));
 }
 
 fn main() {
