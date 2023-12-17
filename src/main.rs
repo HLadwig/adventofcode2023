@@ -1861,6 +1861,130 @@ fn day13() {
     println!("{}", day13_2(&data));
 }
 
+#[test]
+fn day14tests() {
+    let mut data =
+        std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day14test.txt")
+            .expect("Data for day14-Test not found");
+
+    assert_eq!(day14_1(&data), 136);
+    assert_eq!(day14_2(&mut data), 64);
+}
+
+fn day14_1(input: &Vec<u8>) -> usize {
+    let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
+    let lines = input.len() / columns;
+    let mut sum = 0;
+    for i in 0..columns - 2 {
+        let mut add_line = lines;
+        for j in 0..lines {
+            let content = input[j * columns + i];
+            if content == b'O' {
+                sum += add_line;
+                add_line -= 1;
+            }
+            if content == b'#' {
+                add_line = lines - j - 1;
+            }
+        }
+    }
+    sum
+}
+
+fn day14_2(input: &mut Vec<u8>) -> usize {
+    let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
+    let lines = input.len() / columns;
+    for i in 0..1000000000 {
+        let previous_cycle = input.clone();
+        // north
+        for i in 0..columns - 2 {
+            let mut set_line = 0;
+            for j in 0..lines {
+                let content = input[j * columns + i];
+                if content == b'O' {
+                    input[set_line * columns + i] = b'O';
+                    if set_line != j {
+                        input[j * columns + i] = b'.';
+                    }
+                    set_line += 1;
+                }
+                if content == b'#' {
+                    set_line = j + 1;
+                }
+            }
+        }
+        // west
+        for i in 0..lines {
+            let mut set_column = 0;
+            for j in 0..columns - 2 {
+                let content = input[i * columns + j];
+                if content == b'O' {
+                    input[i * columns + set_column] = b'O';
+                    if set_column != j {
+                        input[i * columns + j] = b'.';
+                    }
+                    set_column += 1;
+                }
+                if content == b'#' {
+                    set_column = j + 1;
+                }
+            }
+        }
+        // south
+        for i in 0..columns - 2 {
+            let mut set_line = lines - 1;
+            for j in (0..lines).rev() {
+                let content = input[j * columns + i];
+                if content == b'O' {
+                    input[set_line * columns + i] = b'O';
+                    if set_line != j {
+                        input[j * columns + i] = b'.';
+                    }
+                    set_line -= 1;
+                }
+                if content == b'#' && j > 0 {
+                    set_line = j - 1;
+                }
+            }
+        }
+        // east
+        for i in 0..lines {
+            let mut set_column = columns - 3;
+            for j in (0..columns - 2).rev() {
+                let content = input[i * columns + j];
+                if content == b'O' {
+                    input[i * columns + set_column] = b'O';
+                    if set_column != j {
+                        input[i * columns + j] = b'.';
+                    }
+                    set_column -= 1;
+                }
+                if content == b'#' && j > 0 {
+                    set_column = j - 1;
+                }
+            }
+        }
+        let matching = previous_cycle
+            .iter()
+            .zip(input.iter())
+            .filter(|&(a, b)| a == b)
+            .count();
+        if matching == previous_cycle.len() && matching == input.len() {
+            break;
+        }
+        day10print_map(input, columns, lines);
+    }
+    day14_1(input)
+}
+
+fn day14() {
+    let data = std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day14.txt")
+        .expect("Data for day14-Problem not found");
+
+    println!("{}", day14_1(&data));
+    //println!("{}", day14_2(&data));
+}
+
 fn main() {
     println!("Day1 results:");
     day1();
@@ -1888,6 +2012,8 @@ fn main() {
     //day12();
     println!("Day13 results:");
     day13();
+    println!("Day14 results:");
+    day14();
 }
 
 /*
