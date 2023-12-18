@@ -2113,6 +2113,56 @@ fn day14() {
     println!("{}", day14_2(&mut data));
 }
 
+#[test]
+fn day15tests() {
+    let mut data = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day15test.txt",
+    )
+    .expect("Data for day15-Test not found");
+    data = data.replace("\r\n", "");
+
+    println!(
+        "{:?},{:?}",
+        day15_compute_hash("rn"),
+        day15_compute_hash("cm")
+    );
+
+    assert_eq!(day15_compute_hash("HASH"), 52);
+    assert_eq!(day15_1(&data), 1320);
+    //assert_eq!(day15_2(&data), 30);
+}
+
+fn day15_compute_hash(step: &str) -> u32 {
+    let mut sum: u32 = 0;
+    for c in step.as_bytes() {
+        sum += *c as u32;
+        sum *= 17;
+        sum %= 256;
+    }
+    //println!("{:?}, Hash: {:?}", step, sum);
+    sum
+}
+
+fn day15_1(input: &str) -> u32 {
+    input
+        .split(|x| x == ',')
+        .map(|x| day15_compute_hash(x))
+        .sum()
+}
+
+//fn day15_2(input: &str) -> i32 {}
+
+fn day15() {
+    let mut data = std::fs::read_to_string(
+        "C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day15.txt",
+    )
+    .expect("Data for day15-Problem not found");
+    data = data.replace("\r\n", "");
+
+    println!("{}", day15_1(&data));
+    //println!("{}", day15_2(&data));
+}
+
 fn main() {
     println!("Day1 results:");
     day1();
@@ -2142,6 +2192,8 @@ fn main() {
     day13();
     println!("Day14 results:");
     day14();
+    println!("Day15 results:");
+    day15();
 }
 
 /*
