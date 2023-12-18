@@ -1868,6 +1868,7 @@ fn day14tests() {
             .expect("Data for day14-Test not found");
 
     assert_eq!(day14_1(&data), 136);
+    //assert_eq!(day14_1ver2(&mut data), 136);
     assert_eq!(day14_2(&mut data), 64);
 }
 
@@ -1891,11 +1892,53 @@ fn day14_1(input: &Vec<u8>) -> usize {
     sum
 }
 
+fn day14_1ver2(input: &mut Vec<u8>) -> usize {
+    let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
+    let lines = input.len() / columns;
+    // north
+    for i in 0..columns - 2 {
+        let mut set_line = 0;
+        for j in 0..lines {
+            let content = input[j * columns + i];
+            if content == b'O' {
+                input[set_line * columns + i] = b'O';
+                if set_line != j {
+                    input[j * columns + i] = b'.';
+                }
+                set_line += 1;
+            }
+            if content == b'#' {
+                set_line = j + 1;
+            }
+        }
+    }
+    day14_compute_load_without_tilting(input)
+}
+
+fn day14_compute_load_without_tilting(input: &Vec<u8>) -> usize {
+    let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
+    let lines = input.len() / columns;
+    let mut sum = 0;
+    for i in 0..columns - 2 {
+        let mut add_line = lines;
+        for j in 0..lines {
+            let content = input[j * columns + i];
+            if content == b'O' {
+                sum += add_line;
+            }
+            add_line -= 1;
+        }
+    }
+    sum
+}
+
 fn day14_2(input: &mut Vec<u8>) -> usize {
     let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
     let lines = input.len() / columns;
     let mut first_cycle = vec![];
-    for i in 0..1000000000 {
+    let run_cycles = 1000000000;
+    let mut rest: i32 = 0;
+    for i in 0..run_cycles {
         // north
         for i in 0..columns - 2 {
             let mut set_line = 0;
@@ -1974,14 +2017,90 @@ fn day14_2(input: &mut Vec<u8>) -> usize {
             .filter(|&(a, b)| a == b)
             .count();
         if matching == first_cycle.len() && matching == input.len() {
-            println!("Cycle after {:?}", i);
+            let cycle_length = i - 100;
+            let rest_cycles: i32 = run_cycles - i - 1;
+            rest = rest_cycles % cycle_length;
             break;
         }
         if i == 100 {
             first_cycle = input.clone();
         }
     }
-    day14_1(input)
+    for _i in 0..rest {
+        // north
+        for i in 0..columns - 2 {
+            let mut set_line = 0;
+            for j in 0..lines {
+                let content = input[j * columns + i];
+                if content == b'O' {
+                    input[set_line * columns + i] = b'O';
+                    if set_line != j {
+                        input[j * columns + i] = b'.';
+                    }
+                    set_line += 1;
+                }
+                if content == b'#' {
+                    set_line = j + 1;
+                }
+            }
+        }
+        // west
+        for i in 0..lines {
+            let mut set_column = 0;
+            for j in 0..columns - 2 {
+                let content = input[i * columns + j];
+                if content == b'O' {
+                    input[i * columns + set_column] = b'O';
+                    if set_column != j {
+                        input[i * columns + j] = b'.';
+                    }
+                    set_column += 1;
+                }
+                if content == b'#' {
+                    set_column = j + 1;
+                }
+            }
+        }
+        // south
+        for i in 0..columns - 2 {
+            let mut set_line = lines - 1;
+            for j in (0..lines).rev() {
+                let content = input[j * columns + i];
+                if content == b'O' {
+                    input[set_line * columns + i] = b'O';
+                    if set_line != j {
+                        input[j * columns + i] = b'.';
+                    }
+                    if set_line >= 1 {
+                        set_line -= 1;
+                    }
+                }
+                if content == b'#' && j > 0 {
+                    set_line = j - 1;
+                }
+            }
+        }
+        // east
+        for i in 0..lines {
+            let mut set_column = columns - 3;
+            for j in (0..columns - 2).rev() {
+                let content = input[i * columns + j];
+                if content == b'O' {
+                    input[i * columns + set_column] = b'O';
+                    if set_column != j {
+                        input[i * columns + j] = b'.';
+                    }
+                    if set_column >= 1 {
+                        set_column -= 1;
+                    }
+                }
+                if content == b'#' && j > 0 {
+                    set_column = j - 1;
+                }
+            }
+        }
+    }
+    day14_compute_load_without_tilting(input)
 }
 
 fn day14() {
@@ -1990,6 +2109,7 @@ fn day14() {
             .expect("Data for day14-Problem not found");
 
     println!("{}", day14_1(&data));
+    //println!("{}", day14_1ver2(&mut data));
     println!("{}", day14_2(&mut data));
 }
 
