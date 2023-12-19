@@ -2145,13 +2145,13 @@ fn day15_1(input: &str) -> u32 {
 }
 
 #[derive(Debug)]
-struct day15_lens {
+struct Day15Lens {
     label: String,
     focal: u32,
     action: char,
 }
 
-impl day15_lens {
+impl Day15Lens {
     fn new(input: &str) -> Self {
         if input.ends_with(|x| x == '-') {
             Self {
@@ -2171,12 +2171,12 @@ impl day15_lens {
 }
 
 fn day15_2(input: &str) -> u32 {
-    let mut boxes: Vec<Vec<day15_lens>> = Vec::with_capacity(256);
+    let mut boxes: Vec<Vec<Day15Lens>> = Vec::with_capacity(256);
     for _i in 0..256 {
         boxes.push(vec![]);
     }
     input.split(|x| x == ',').for_each(|x| {
-        let lens = day15_lens::new(x);
+        let lens = Day15Lens::new(x);
         let boxnumber = day15_compute_hash(lens.label.as_str()) as usize;
         let actbox = &mut boxes[boxnumber];
         if lens.action == '-' {
@@ -2213,6 +2213,267 @@ fn day15() {
     println!("{}", day15_2(&data));
 }
 
+#[test]
+fn day16tests() {
+    let data =
+        std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day16test.txt")
+            .expect("Data for day16-Test not found");
+
+    assert_eq!(day16_1(&data), 46);
+    //assert_eq!(day16_2(&data), 30);
+}
+
+#[derive(Debug)]
+struct Day16BeamPosition {
+    x: usize,
+    y: usize,
+    direction: char,
+}
+
+impl Day16BeamPosition {
+    fn new(x: usize, y: usize, direction: char) -> Self {
+        Self { x, y, direction }
+    }
+}
+
+fn day16_1(input: &Vec<u8>) -> usize {
+    let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
+    let lines = input.len() / columns;
+    let mut beam_positions: Vec<Day16BeamPosition> = vec![];
+    let mut unchecked_beams: Vec<Day16BeamPosition> = vec![];
+    unchecked_beams.push(Day16BeamPosition::new(0, 0, '>'));
+    while !unchecked_beams.is_empty() {
+        let position = unchecked_beams.pop().unwrap();
+        if beam_positions
+            .iter()
+            .position(|x| {
+                x.x == position.x && x.y == position.y && x.direction == position.direction
+            })
+            .is_some()
+        {
+            continue;
+        }
+        beam_positions.push(Day16BeamPosition::new(
+            position.x,
+            position.y,
+            position.direction,
+        ));
+        let symbol = input[position.y * columns + position.x];
+        match symbol {
+            b'/' => match position.direction {
+                '>' => {
+                    if position.y >= 1 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x,
+                            position.y - 1,
+                            '^',
+                        ));
+                    }
+                }
+                '<' => {
+                    if position.y + 1 < lines {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x,
+                            position.y + 1,
+                            'v',
+                        ));
+                    }
+                }
+                '^' => {
+                    if position.x + 1 < columns - 2 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x + 1,
+                            position.y,
+                            '>',
+                        ));
+                    }
+                }
+                'v' => {
+                    if position.x >= 1 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x - 1,
+                            position.y,
+                            '<',
+                        ));
+                    }
+                }
+                _ => (),
+            },
+            b'\\' => match position.direction {
+                '<' => {
+                    if position.y >= 1 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x,
+                            position.y - 1,
+                            '^',
+                        ));
+                    }
+                }
+                '>' => {
+                    if position.y + 1 < lines {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x,
+                            position.y + 1,
+                            'v',
+                        ));
+                    }
+                }
+                'v' => {
+                    if position.x + 1 < columns - 2 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x + 1,
+                            position.y,
+                            '>',
+                        ));
+                    }
+                }
+                '^' => {
+                    if position.x >= 1 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x - 1,
+                            position.y,
+                            '<',
+                        ));
+                    }
+                }
+                _ => (),
+            },
+            b'|' => match position.direction {
+                '^' => {
+                    if position.y >= 1 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x,
+                            position.y - 1,
+                            '^',
+                        ));
+                    }
+                }
+                'v' => {
+                    if position.y + 1 < lines {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x,
+                            position.y + 1,
+                            'v',
+                        ));
+                    }
+                }
+                '>' | '<' => {
+                    if position.y >= 1 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x,
+                            position.y - 1,
+                            '^',
+                        ));
+                    }
+                    if position.y + 1 < lines {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x,
+                            position.y + 1,
+                            'v',
+                        ));
+                    }
+                }
+                _ => (),
+            },
+            b'-' => match position.direction {
+                '^' | 'v' => {
+                    if position.x + 1 < columns - 2 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x + 1,
+                            position.y,
+                            '>',
+                        ));
+                    }
+                    if position.x >= 1 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x - 1,
+                            position.y,
+                            '<',
+                        ));
+                    }
+                }
+                '>' => {
+                    if position.x + 1 < columns - 2 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x + 1,
+                            position.y,
+                            '>',
+                        ));
+                    }
+                }
+                '<' => {
+                    if position.x >= 1 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x - 1,
+                            position.y,
+                            '<',
+                        ));
+                    }
+                }
+                _ => (),
+            },
+            b'.' => match position.direction {
+                '^' => {
+                    if position.y >= 1 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x,
+                            position.y - 1,
+                            '^',
+                        ));
+                    }
+                }
+                'v' => {
+                    if position.y + 1 < lines {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x,
+                            position.y + 1,
+                            'v',
+                        ));
+                    }
+                }
+                '>' => {
+                    if position.x + 1 < columns - 2 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x + 1,
+                            position.y,
+                            '>',
+                        ));
+                    }
+                }
+                '<' => {
+                    if position.x >= 1 {
+                        unchecked_beams.push(Day16BeamPosition::new(
+                            position.x - 1,
+                            position.y,
+                            '<',
+                        ));
+                    }
+                }
+                _ => (),
+            },
+            _ => (),
+        }
+    }
+    let mut unique_positions: Vec<(usize, usize)> = vec![];
+    for pos in beam_positions {
+        let coord = (pos.x, pos.y);
+        if !unique_positions.contains(&coord) {
+            unique_positions.push(coord);
+        }
+    }
+    unique_positions.len()
+}
+
+//fn day16_2(input: &str) -> i32 {}
+
+fn day16() {
+    let data = std::fs::read("C:\\Users\\Hagen\\RustProjects\\adventofcode2023\\data\\day16.txt")
+        .expect("Data for day16-Problem not found");
+
+    println!("{}", day16_1(&data));
+    //println!("{}", day16_2(&data));
+}
+
 fn main() {
     println!("Day1 results:");
     day1();
@@ -2244,6 +2505,8 @@ fn main() {
     day14();
     println!("Day15 results:");
     day15();
+    println!("Day16 results:");
+    day16();
 }
 
 /*
