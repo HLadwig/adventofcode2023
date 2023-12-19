@@ -2121,15 +2121,9 @@ fn day15tests() {
     .expect("Data for day15-Test not found");
     data = data.replace("\r\n", "");
 
-    println!(
-        "{:?},{:?}",
-        day15_compute_hash("rn"),
-        day15_compute_hash("cm")
-    );
-
     assert_eq!(day15_compute_hash("HASH"), 52);
     assert_eq!(day15_1(&data), 1320);
-    //assert_eq!(day15_2(&data), 30);
+    assert_eq!(day15_2(&data), 145);
 }
 
 fn day15_compute_hash(step: &str) -> u32 {
@@ -2150,7 +2144,63 @@ fn day15_1(input: &str) -> u32 {
         .sum()
 }
 
-//fn day15_2(input: &str) -> i32 {}
+#[derive(Debug)]
+struct day15_lens {
+    label: String,
+    focal: u32,
+    action: char,
+}
+
+impl day15_lens {
+    fn new(input: &str) -> Self {
+        if input.ends_with(|x| x == '-') {
+            Self {
+                label: String::from(input.trim_end_matches(|x| x == '-')),
+                focal: 0,
+                action: '-',
+            }
+        } else {
+            let mut parts = input.split(|x| x == '=');
+            Self {
+                label: String::from(parts.next().unwrap()),
+                focal: parts.next().unwrap().parse().unwrap(),
+                action: '=',
+            }
+        }
+    }
+}
+
+fn day15_2(input: &str) -> u32 {
+    let mut boxes: Vec<Vec<day15_lens>> = Vec::with_capacity(256);
+    for _i in 0..256 {
+        boxes.push(vec![]);
+    }
+    input.split(|x| x == ',').for_each(|x| {
+        let lens = day15_lens::new(x);
+        let boxnumber = day15_compute_hash(lens.label.as_str()) as usize;
+        let actbox = &mut boxes[boxnumber];
+        if lens.action == '-' {
+            let rem_index = actbox.iter().position(|x| x.label == lens.label);
+            if let Some(ind) = rem_index {
+                actbox.remove(ind);
+            }
+        } else {
+            let rem_index = actbox.iter().position(|x| x.label == lens.label);
+            if let Some(ind) = rem_index {
+                actbox[ind].focal = lens.focal;
+            } else {
+                actbox.push(lens);
+            }
+        }
+    });
+    let mut sum = 0;
+    for (boxnum, lenses) in boxes.iter().enumerate() {
+        for (slotnum, lens) in lenses.iter().enumerate() {
+            sum += ((boxnum + 1) * (slotnum + 1)) as u32 * lens.focal;
+        }
+    }
+    sum
+}
 
 fn day15() {
     let mut data = std::fs::read_to_string(
@@ -2160,7 +2210,7 @@ fn day15() {
     data = data.replace("\r\n", "");
 
     println!("{}", day15_1(&data));
-    //println!("{}", day15_2(&data));
+    println!("{}", day15_2(&data));
 }
 
 fn main() {
