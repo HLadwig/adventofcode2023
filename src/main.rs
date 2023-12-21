@@ -2220,7 +2220,7 @@ fn day16tests() {
             .expect("Data for day16-Test not found");
 
     assert_eq!(day16_1(&data), 46);
-    //assert_eq!(day16_2(&data), 30);
+    assert_eq!(day16_2(&data), 51);
 }
 
 #[derive(Debug)]
@@ -2237,11 +2237,38 @@ impl Day16BeamPosition {
 }
 
 fn day16_1(input: &Vec<u8>) -> usize {
+    day16energized_tiles(input, &Day16BeamPosition::new(0, 0, '>'))
+}
+
+fn day16_2(input: &Vec<u8>) -> usize {
+    let mut start_positions: Vec<Day16BeamPosition> = vec![];
+    let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
+    let lines = input.len() / columns;
+    for i in 0..lines {
+        start_positions.push(Day16BeamPosition::new(0, i, '>'));
+        start_positions.push(Day16BeamPosition::new(columns - 2, i, '<'));
+    }
+    for i in 0..columns - 1 {
+        start_positions.push(Day16BeamPosition::new(i, 0, 'v'));
+        start_positions.push(Day16BeamPosition::new(i, lines - 1, '^'));
+    }
+    start_positions
+        .iter()
+        .map(|x| day16energized_tiles(input, x))
+        .max()
+        .unwrap()
+}
+
+fn day16energized_tiles(input: &Vec<u8>, startpos: &Day16BeamPosition) -> usize {
     let columns = input.iter().position(|&x| x == b'\n').unwrap() + 1;
     let lines = input.len() / columns;
     let mut beam_positions: Vec<Day16BeamPosition> = vec![];
     let mut unchecked_beams: Vec<Day16BeamPosition> = vec![];
-    unchecked_beams.push(Day16BeamPosition::new(0, 0, '>'));
+    unchecked_beams.push(Day16BeamPosition::new(
+        startpos.x,
+        startpos.y,
+        startpos.direction,
+    ));
     while !unchecked_beams.is_empty() {
         let position = unchecked_beams.pop().unwrap();
         if beam_positions
@@ -2471,7 +2498,7 @@ fn day16() {
         .expect("Data for day16-Problem not found");
 
     println!("{}", day16_1(&data));
-    //println!("{}", day16_2(&data));
+    println!("{}", day16_2(&data));
 }
 
 fn main() {
